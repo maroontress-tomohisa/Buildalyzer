@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,11 +23,7 @@ namespace Buildalyzer.Workspaces
         /// <returns>A Roslyn workspace.</returns>
         public static AdhocWorkspace GetWorkspace(this AnalyzerResult analyzerResult, bool addProjectReferences = false)
         {
-            if (analyzerResult == null)
-            {
-                throw new ArgumentNullException(nameof(analyzerResult));
-            }
-            AdhocWorkspace workspace = new AdhocWorkspace();
+            var workspace = new AdhocWorkspace();
             analyzerResult.AddToWorkspace(workspace, addProjectReferences);
             return workspace;
         }
@@ -43,26 +38,17 @@ namespace Buildalyzer.Workspaces
         /// If <c>true</c> this will trigger (re)building all referenced projects. Directly add <see cref="AnalyzerResult"/> instances instead if you already have them available.
         /// </param>
         /// <returns>The newly added Roslyn project.</returns>
-        public static Project AddToWorkspace(this AnalyzerResult analyzerResult, Workspace workspace, bool addProjectReferences = false)
+        public static Project? AddToWorkspace(this AnalyzerResult analyzerResult, Workspace workspace, bool addProjectReferences = false)
         {
-            if (analyzerResult == null)
-            {
-                throw new ArgumentNullException(nameof(analyzerResult));
-            }
-            if (workspace == null)
-            {
-                throw new ArgumentNullException(nameof(workspace));
-            }
-
             // Get or create an ID for this project
-            ProjectId projectId = ProjectId.CreateFromSerialized(analyzerResult.ProjectGuid);
+            var projectId = ProjectId.CreateFromSerialized(analyzerResult.ProjectGuid);
 
             // Cache the project references
             analyzerResult.Manager.WorkspaceProjectReferences[projectId.Id] = analyzerResult.ProjectReferences.ToArray();
 
             // Create and add the project
-            ProjectInfo projectInfo = GetProjectInfo(analyzerResult, workspace, projectId);
-            Solution solution = workspace.CurrentSolution.AddProject(projectInfo);
+            var projectInfo = GetProjectInfo(analyzerResult, workspace, projectId);
+            var solution = workspace.CurrentSolution.AddProject(projectInfo);
 
             // Check if this project is referenced by any other projects in the workspace
             foreach (Project existingProject in solution.Projects.ToArray())
@@ -72,7 +58,7 @@ namespace Buildalyzer.Workspaces
                     && existingReferences.Contains(analyzerResult.ProjectFilePath))
                 {
                     // Add the reference to the existing project
-                    ProjectReference projectReference = new ProjectReference(projectId);
+                    var projectReference = new ProjectReference(projectId);
                     solution = solution.AddProjectReference(existingProject.Id, projectReference);
                 }
             }
@@ -102,9 +88,9 @@ namespace Buildalyzer.Workspaces
 
         private static ProjectInfo GetProjectInfo(AnalyzerResult analyzerResult, Workspace workspace, ProjectId projectId)
         {
-            string projectName = Path.GetFileNameWithoutExtension(analyzerResult.ProjectFilePath);
-            string languageName = GetLanguageName(analyzerResult.ProjectFilePath);
-            ProjectInfo projectInfo = ProjectInfo.Create(
+            var projectName = Path.GetFileNameWithoutExtension(analyzerResult.ProjectFilePath);
+            var languageName = GetLanguageName(analyzerResult.ProjectFilePath);
+            return ProjectInfo.Create(
                 projectId,
                 VersionStamp.Create(),
                 projectName,
@@ -117,17 +103,16 @@ namespace Buildalyzer.Workspaces
                 metadataReferences: GetMetadataReferences(analyzerResult),
                 parseOptions: CreateParseOptions(analyzerResult, languageName),
                 compilationOptions: CreateCompilationOptions(analyzerResult, languageName));
-            return projectInfo;
         }
 
-        private static ParseOptions CreateParseOptions(AnalyzerResult analyzerResult, string languageName)
+        private static ParseOptions? CreateParseOptions(AnalyzerResult analyzerResult, string languageName)
         {
             if (languageName == LanguageNames.CSharp)
             {
-                CSharpParseOptions parseOptions = new CSharpParseOptions();
+                var parseOptions = new CSharpParseOptions();
 
                 // Add any constants
-                string constants = analyzerResult.GetProperty("DefineConstants");
+                var constants = analyzerResult.GetProperty("DefineConstants");
                 if (!string.IsNullOrWhiteSpace(constants))
                 {
                     parseOptions = parseOptions
@@ -135,7 +120,7 @@ namespace Buildalyzer.Workspaces
                 }
 
                 // Get language version
-                string langVersion = analyzerResult.GetProperty("LangVersion");
+                var langVersion = analyzerResult.GetProperty("LangVersion");
                 if (!string.IsNullOrWhiteSpace(langVersion)
                     && Microsoft.CodeAnalysis.CSharp.LanguageVersionFacts.TryParse(langVersion, out Microsoft.CodeAnalysis.CSharp.LanguageVersion languageVersion))
                 {
@@ -147,10 +132,10 @@ namespace Buildalyzer.Workspaces
 
             if (languageName == LanguageNames.VisualBasic)
             {
-                VisualBasicParseOptions parseOptions = new VisualBasicParseOptions();
+                var parseOptions = new VisualBasicParseOptions();
 
                 // Get language version
-                string langVersion = analyzerResult.GetProperty("LangVersion");
+                var langVersion = analyzerResult.GetProperty("LangVersion");
                 Microsoft.CodeAnalysis.VisualBasic.LanguageVersion languageVersion = Microsoft.CodeAnalysis.VisualBasic.LanguageVersion.Default;
                 if (!string.IsNullOrWhiteSpace(langVersion)
                     && Microsoft.CodeAnalysis.VisualBasic.LanguageVersionFacts.TryParse(langVersion, ref languageVersion))
@@ -164,25 +149,17 @@ namespace Buildalyzer.Workspaces
             return null;
         }
 
-        private static CompilationOptions CreateCompilationOptions(AnalyzerResult analyzerResult, string languageName)
+        private static CompilationOptions? CreateCompilationOptions(AnalyzerResult analyzerResult, string languageName)
         {
-            string outputType = analyzerResult.GetProperty("OutputType");
-            OutputKind? kind = null;
-            switch (outputType)
+            var outputType = analyzerResult.GetProperty("OutputType");
+            var kind = outputType switch
             {
-                case "Library":
-                    kind = OutputKind.DynamicallyLinkedLibrary;
-                    break;
-                case "Exe":
-                    kind = OutputKind.ConsoleApplication;
-                    break;
-                case "Module":
-                    kind = OutputKind.NetModule;
-                    break;
-                case "Winexe":
-                    kind = OutputKind.WindowsApplication;
-                    break;
-            }
+                "Library" => OutputKind.DynamicallyLinkedLibrary,
+                "Exe" => OutputKind.ConsoleApplication,
+                "Module" => OutputKind.NetModule,
+                "Winexe" => OutputKind.WindowsApplication,
+                _ => (OutputKind?)null,
+            };
 
             if (kind.HasValue)
             {
@@ -202,16 +179,14 @@ namespace Buildalyzer.Workspaces
 
         private static IEnumerable<ProjectReference> GetExistingProjectReferences(AnalyzerResult analyzerResult, Workspace workspace) =>
             analyzerResult.ProjectReferences
-                .Select(x => workspace.CurrentSolution.Projects.FirstOrDefault(y => y.FilePath == x))
-                .Where(x => x != null)
-                .Select(x => new ProjectReference(x.Id))
-            ?? Array.Empty<ProjectReference>();
+                .SelectMany(x => workspace.CurrentSolution.Projects.Where(y => y.FilePath == x).Take(1))
+                .Select(x => new ProjectReference(x.Id));
 
         private static IEnumerable<ProjectAnalyzer> GetReferencedAnalyzerProjects(AnalyzerResult analyzerResult) =>
             analyzerResult.ProjectReferences
-                .Select(x => analyzerResult.Manager.Projects.TryGetValue(x, out ProjectAnalyzer a) ? a : null)
-                .Where(x => x != null)
-            ?? Array.Empty<ProjectAnalyzer>();
+                .SelectMany(x => analyzerResult.Manager.Projects.TryGetValue(x, out ProjectAnalyzer a)
+                    ? new[] { a }
+                    : Enumerable.Empty<ProjectAnalyzer>());
 
         private static IEnumerable<DocumentInfo> GetDocuments(AnalyzerResult analyzerResult, ProjectId projectId) =>
             analyzerResult
@@ -223,25 +198,22 @@ namespace Buildalyzer.Workspaces
                         TextAndVersion.Create(
                             SourceText.From(File.ReadAllText(x), Encoding.Default), VersionStamp.Create())),
                     filePath: x))
-            ?? Array.Empty<DocumentInfo>();
+            ?? Enumerable.Empty<DocumentInfo>();
 
         private static IEnumerable<MetadataReference> GetMetadataReferences(AnalyzerResult analyzerResult) =>
             analyzerResult
                 .References?.Where(File.Exists)
                 .Select(x => MetadataReference.CreateFromFile(x))
-            ?? (IEnumerable<MetadataReference>)Array.Empty<MetadataReference>();
+            ?? Enumerable.Empty<MetadataReference>();
 
         private static string GetLanguageName(string projectPath)
         {
-            switch (Path.GetExtension(projectPath))
+            return Path.GetExtension(projectPath) switch
             {
-                case ".csproj":
-                    return LanguageNames.CSharp;
-                case ".vbproj":
-                    return LanguageNames.VisualBasic;
-                default:
-                    throw new InvalidOperationException("Could not determine supported language from project path");
-            }
+                ".csproj" => LanguageNames.CSharp,
+                ".vbproj" => LanguageNames.VisualBasic,
+                _ => throw new InvalidOperationException("Could not determine supported language from project path"),
+            };
         }
     }
 }

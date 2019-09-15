@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
 namespace Buildalyzer.Workspaces
@@ -10,15 +8,14 @@ namespace Buildalyzer.Workspaces
         public static AdhocWorkspace GetWorkspace(this AnalyzerManager manager)
         {
             // Run builds in parallel
-            List<AnalyzerResult> results = manager.Projects.Values
+            var results = manager.Projects.Values
                 .AsParallel()
-                .Select(p => p.Build().FirstOrDefault())
-                .Where(x => x != null)
+                .SelectMany(p => p.Build().Take(1))
                 .ToList();
 
             // Add each result to a new workspace
-            AdhocWorkspace workspace = new AdhocWorkspace();
-            foreach (AnalyzerResult result in results)
+            var workspace = new AdhocWorkspace();
+            foreach (var result in results)
             {
                 result.AddToWorkspace(workspace);
             }

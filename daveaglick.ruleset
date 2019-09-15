@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="Dave Glick Rules" Description="These rules represent Dave Glick's preferences and enforce consistent code quality guidelines." ToolsVersion="15.0">
+<RuleSet Name="Dave Glick Rules" Description="These rules represent Dave Glick's preferences and enforce consistent code quality guidelines." ToolsVersion="16.0">
   <Include Path="basicdesignguidelinerules.ruleset" Action="Default" />
   <Rules AnalyzerId="Microsoft.Analyzers.ManagedCodeAnalysis" RuleNamespace="Microsoft.Rules.Managed">
     <Rule Id="CA1020" Action="Warning" />
@@ -40,7 +40,7 @@
   <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp.Features" RuleNamespace="Microsoft.CodeAnalysis.CSharp.Features">
     <Rule Id="IDE0007" Action="None" />
     <Rule Id="IDE0007WithoutSuggestion" Action="None" />
-    <Rule Id="IDE0008" Action="Warning" />
+    <Rule Id="IDE0008" Action="None" />
   </Rules>
   <Rules AnalyzerId="Roslynator.CSharp.Analyzers" RuleNamespace="Roslynator.CSharp.Analyzers">
     <Rule Id="RCS1001" Action="Info" />
@@ -50,10 +50,10 @@
     <Rule Id="RCS1005" Action="Hidden" />
     <Rule Id="RCS1006" Action="Hidden" />
     <Rule Id="RCS1007" Action="None" />
-    <Rule Id="RCS1008" Action="Warning" />
-    <Rule Id="RCS1009" Action="Warning" />
+    <Rule Id="RCS1008" Action="None" />
+    <Rule Id="RCS1009" Action="None" />
     <Rule Id="RCS1010" Action="None" />
-    <Rule Id="RCS1012" Action="Warning" />
+    <Rule Id="RCS1012" Action="None" />
     <Rule Id="RCS1013" Action="None" />
     <Rule Id="RCS1014" Action="None" />
     <Rule Id="RCS1015" Action="Info" />
@@ -273,6 +273,9 @@
     <Rule Id="RCS1229" Action="Info" />
     <Rule Id="RCS1230" Action="Info" />
     <Rule Id="RCS1231" Action="Info" />
+  </Rules>
+  <Rules AnalyzerId="StyleChecker" RuleNamespace="StyleChecker">
+    <Rule Id="LongLine" Action="None" />
   </Rules>
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1101" Action="None" />

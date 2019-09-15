@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using Microsoft.Build.Execution;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis.VisualBasic;
 
 namespace Buildalyzer.Workspaces
 {
@@ -24,11 +16,7 @@ namespace Buildalyzer.Workspaces
         /// <returns>A Roslyn workspace.</returns>
         public static AdhocWorkspace GetWorkspace(this ProjectAnalyzer analyzer, bool addProjectReferences = false)
         {
-            if (analyzer == null)
-            {
-                throw new ArgumentNullException(nameof(analyzer));
-            }
-            AdhocWorkspace workspace = new AdhocWorkspace();
+            var workspace = new AdhocWorkspace();
             AddToWorkspace(analyzer, workspace, addProjectReferences);
             return workspace;
         }
@@ -43,18 +31,9 @@ namespace Buildalyzer.Workspaces
         /// If <c>true</c> this will trigger (re)building all referenced projects. Directly add <see cref="AnalyzerResult"/> instances instead if you already have them available.
         /// </param>
         /// <returns>The newly added Roslyn project.</returns>
-        public static Project AddToWorkspace(this ProjectAnalyzer analyzer, Workspace workspace, bool addProjectReferences = false)
+        public static Project? AddToWorkspace(this ProjectAnalyzer analyzer, Workspace workspace, bool addProjectReferences = false)
         {
-            if (analyzer == null)
-            {
-                throw new ArgumentNullException(nameof(analyzer));
-            }
-            if (workspace == null)
-            {
-                throw new ArgumentNullException(nameof(workspace));
-            }
-
-            return analyzer.Build().FirstOrDefault().AddToWorkspace(workspace, addProjectReferences);
+            return analyzer.Build().FirstOrDefault()?.AddToWorkspace(workspace, addProjectReferences);
         }
     }
 }
